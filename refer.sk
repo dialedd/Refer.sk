@@ -1,0 +1,117 @@
+# created by _dialed#0001
+# dont delete this, give me cred lol
+
+options:
+	reward: /eco %player% give 100             # reward for the player that actualy did the command, bascially just put whatever command u want here
+	referedReward: /eco %arg-1% give 100      # reward for the player whose referal link was used, bascially just put whatever command u want here
+	RewardMsg: "you have set %arg-1% as your referal"            # the msg sent to the player who ran the command
+	playtimeReq: 1  # minimum amount of playtime a player must have to run the command, BTW ITS IN HOURS
+	playtimeMax: 24 # time the player has to do the command /refer, if playtime is greater then the amount of time, they cant run command, BTW ITS IN HOURS
+
+on load:
+	{playtime::*} is not set
+	loop all offline players:
+		set {playtime::%loop-offline player's uuid%} to loop-offline player's time played
+	set {playtimeReq} to {@playtimeReq}
+	set {playtimeMax} to {@playtimeMax}
+
+on join:
+	while player is online:
+		wait 1 seconds
+		set {playtime::%player's uuid%} to player's time played
+
+on quit:
+	set {playtime::%player's uuid%} to player's time played
+
+command /refer [<player>]:
+	trigger:
+		if arg-1 is set:
+			set {_p} to player
+			if arg-1 != {_p}:
+				if {refered::*} does not contain player:
+					if {playtime::%player's uuid%} is greater than {playtimeReq}:
+						if {playtime::%player's uuid%} is less than {playtimeMax}:
+							add player to {refered::*}
+							add 1 to {TopRefer::%arg-1%}
+							message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+							message "<##69fb5e>§lSuccess§r<##69fb5e> | You have set %arg-1% as your referal" to player
+							message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+							message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to arg-1
+							message "<##69fb5e>§lReferal§r<##69fb5e> | %player% has set you as there referal" to arg-1
+							message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to arg-1
+							execute console command "{@reward}"
+							execute console command "{@referedReward}"
+						else:
+							message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+							message "<##ff5b5a>§lERROR§r<##ff5b5a> | Your playtime is over %{playtimeMax}% hours" to player
+							message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+					else:
+						message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+						message "<##ff5b5a>§lERROR§r<##ff5b5a> | Your playtime is under %{playtimeReq}% hour" to player
+						message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+				else:
+					message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+					message "<##ff5b5a>§lERROR§r<##ff5b5a> | You have already been refered" to player
+					message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+			else:
+				message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+				message "<##ff5b5a>§lERROR§r<##ff5b5a> | You can not refer your self" to player
+				message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+		else:
+			message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+			message "<##ff5b5a>§lERROR§r<##ff5b5a> | You must set a user to refer" to player
+			message "§8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+
+command /referlist [<offline player>]:
+	permission: op
+	trigger:
+		if {refered::*} contains arg-1:
+			message "%arg-1% has used /refer" to player
+		else:
+			message "<##ff5b5a>%arg-1% has not used /refer" to player
+
+command /referRemove [<offline player>]:
+	permission: op
+	trigger:
+		remove arg-1 from {refered::*}
+		message "<##ff5b5a>removed %arg-1% from list" to player
+
+command /referTop:
+    trigger:
+        referTop(player)
+
+function referTop(p: player):
+	set {_referTop::*} to sorted indices of {TopRefer::*} in descending order
+	send "&b&lTop Referals" to {_p}
+	loop 10 times:
+		send "&b%loop-value%&a. &b%{_referTop::%loop-value%} parsed as offline player ? "&7No Data"% &7- &e%{_referTop::%loop-value%} ? "&7No Data"%" to {_p}
+
+command /playtime [<offline player>]:
+	trigger:
+		send "&b%player%&b's Play Time is &e%player's time played%" if arg 1 is not set
+		send "&b%arg 1%&b's Play Time is &e%arg 1's time played%" if arg 1 is an offline player
+
+command /pt [<text>] [<offline player>] [<timespan>]:
+	permission: *
+	trigger:
+		send "&f/pt &e<give&c|&etake&c|&ereset&c|&eset> <offline player> <timespan>" if arg 1 is not set
+		arg 1 is set
+		send "&cYou need to specify a player" if arg 2 is not offline player
+		arg 2 is offline player
+		set arg 2's time played to 0 seconds if arg 1 is "reset"
+		send "&6Your playtime was set to &b%arg 2's time played ? 0%" to arg 2 if arg 1 is "reset"
+		send "&6You set %arg 2's displayname ? arg 2%&6's playtime to &b%arg 2's time played ? 0%" if arg 1 is "reset"
+		set {playtime::%arg 2's uuid%} to arg 2's time played if arg 1 is "reset"
+		stop if arg 1 is "reset"
+		send "&cYou need to specify an timespan &7example: 1 minute and 2 seconds" if arg 3 is not a timespan
+		arg 3 is a timespan
+		add arg 3 to arg 2's time played if arg 1 is "give"
+		send "&b%arg 3%&6 has been added to your playtime" to arg 2 if arg 1 is "give"
+		send "&b%arg 3%&6 added to %arg 2's displayname ? arg 2%&6's playtime. New playtime is &b%arg 2's time played ? 0%" if arg 1 is "give"
+		remove arg 3 from arg 2's time played if arg 1 is "take"
+		send "&b%arg 3%&6 has been removed from your playtime" to arg 2 if arg 1 is "take"
+		send "&b%arg 3%&6 removed from %arg 2's displayname ? arg 2%&6's playtime. New playtime is &b%arg 2's time played ? 0%" if arg 1 is "take"
+		set arg 2's time played to arg 3 if arg 1 is "set"
+		send "&6Your playtime was set to &b%arg 2's time played ? 0%" to arg 2 if arg 1 is "set"
+		send "&6You set %arg 2's displayname ? arg 2%&6's playtime to &b%arg 2's time played ? 0%" if arg 1 is "set"
+		set {playtime::%arg 2's uuid%} to arg 2's time played
